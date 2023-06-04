@@ -99,10 +99,14 @@ class Lexer:
 
         token_regex = "|".join("(?P<{}>{})".format(t.name, p) for t, p in token_specification)
         tokens = []
-        for match in re.finditer(token_regex, self.text):
-            token_class = TokenClass[match.lastgroup]
-            value = match.group()
-            tokens.append(Token(token_class, value))
+        for line in self.text.split("\n"):
+            line = line.strip()
+            if line.startswith("//"):
+                continue
+            for match in re.finditer(token_regex, line):
+                token_class = TokenClass[match.lastgroup]
+                value = match.group()
+                tokens.append(Token(token_class, value))           
 
         tokens.append(Token(TokenClass.END_OF_FILE, ""))
         return tokens
@@ -114,28 +118,28 @@ class SyntaxAnalyzer:
         self.lexer = lexer
         self.peek_token = None
 
-
     def program(self):
-        logging.info("> program()")
+        logging.info("<< start program()")
 
         self.current_token = self.lexer[0]
         self.declaration()
 
-        print(self.current_token)
 
         current_token_index = self.lexer.index(self.current_token)
-        index = current_token_index 
-        while index < len(self.lexer):
-            self.current_token = self.lexer[index]
-            print("selllf ", self.current_token, "\n")
-            index += 1
-            self.declaration()
+        index = current_token_index
 
-        logging.info("< program()")
+        while index < len(self.lexer):
+            if self.current_token.token_class == TokenClass.END_OF_FILE:
+                break
+            else:
+                self.declaration()
+                index += 1
+
+        logging.info("end program() >>\n")
 
         
     def declaration(self):
-        logging.info("> declaration()")
+        logging.info("<< start declaration()")
 
         if self.current_token is None:
             return  # Final do arquivo, retorna sem fazer mais verificações
@@ -146,27 +150,27 @@ class SyntaxAnalyzer:
             self.varDecl()
         else:
             self.statement()
-        logging.info("< declaration()")
+        logging.info("end declaration() >>\n")
 
 
     def funDecl(self):
-        logging.info("> funDecl()")
+        logging.info("<< start funDecl()")
         self.validate_class(TokenClass.FUN)
         self.function()
-        logging.info("< funDecl()")
+        logging.info("end funDecl() >>\n")
 
     def varDecl(self):
-        logging.info("> varDecl()")
+        logging.info("<< start varDecl()")
         self.validate_class(TokenClass.VAR)
         self.validate_class(TokenClass.IDENTIFIER)
         if self.test_class(TokenClass.OPERATOR_ASSIGN):
             self.validate_class(TokenClass.OPERATOR_ASSIGN)
             self.expression()
         self.validate_class(TokenClass.DELIM_SEMICOLON)
-        logging.info("< varDecl()")
+        logging.info("end varDecl() >>\n")
 
     def statement(self):
-        logging.info("> statement()")
+        logging.info("<< start statement()")
         if self.test_class(TokenClass.FOR):
             self.forStmt()
         elif self.test_class(TokenClass.IF):
@@ -181,16 +185,16 @@ class SyntaxAnalyzer:
             self.block()
         else:
             self.expr_stmt()
-        logging.info("< statement()")
+        logging.info("end statement() >>\n")
 
     def expr_stmt(self):
-        logging.info("> expr_stmt()")
+        logging.info("<< start expr_stmt()")
         self.expression()
         self.validate_class(TokenClass.DELIM_SEMICOLON)
-        logging.info("< expr_stmt()")
+        logging.info("expr_stmt() >>\n")
 
     def forStmt(self):
-        logging.info("> forStmt()")
+        logging.info("<< start forStmt()")
         self.validate_class(TokenClass.FOR)
         self.validate_class(TokenClass.DELIM_OPEN_PAREN)
 
@@ -210,10 +214,10 @@ class SyntaxAnalyzer:
         self.validate_class(TokenClass.DELIM_CLOSE_PAREN)
         self.statement()
 
-        logging.info("< forStmt()")
+        logging.info("end forStmt() >>")
 
     def ifStmt(self):
-        logging.info("> ifStmt()")
+        logging.info("<< start ifStmt()")
         self.validate_class(TokenClass.IF)
         self.validate_class(TokenClass.DELIM_OPEN_PAREN)
         self.expression()
@@ -222,27 +226,27 @@ class SyntaxAnalyzer:
         if self.test_class(TokenClass.ELSE):
             self.validate_class(TokenClass.ELSE)
             self.statement()
-        logging.info("< ifStmt()")
+        logging.info("end ifStmt()>>\n")
 
     def printStmt(self):
-        logging.info("> printStmt()")
+        logging.info("<< start printStmt()")
         self.validate_class(TokenClass.PRINT)
         self.expression()
-        self.validate_class(TokenClass.DELIM_SEMICOLON, TokenClass.END_OF_FILE)
-        logging.info("< printStmt()")
+        self.validate_class(TokenClass.DELIM_SEMICOLON)
+        logging.info("end printStmt() >>\n")
 
 
     def returnStmt(self):
-        logging.info("> returnStmt()")
+        logging.info("<< start returnStmt()")
         self.validate_class(TokenClass.RETURN)
         if self.current_token != TokenClass.DELIM_SEMICOLON:
             self.expression()
         self.validate_class(TokenClass.DELIM_SEMICOLON)
-        logging.info("< returnStmt()")
+        logging.info("end returnStmt() >>\n")
 
 
     def whileStmt(self):
-        logging.info("> whileStmt()")
+        logging.info("<< start whileStmt()")
         self.validate_class(TokenClass.WHILE)
         self.validate_class(TokenClass.DELIM_OPEN_PAREN)
         self.expression()
@@ -253,23 +257,23 @@ class SyntaxAnalyzer:
         else:
             logging.error("Expected ')' after expression in while statement")
 
-        logging.info("< whileStmt()")
+        logging.info("end whileStmt() >>\n")
 
     def block(self):
-        logging.info("> block()")
+        logging.info("<< start block()")
         self.validate_class(TokenClass.DELIM_OPEN_BRACE)
         while not self.test_class(TokenClass.DELIM_CLOSE_BRACE):
             self.declaration()
         self.validate_class(TokenClass.DELIM_CLOSE_BRACE)
-        logging.info("< block()")
+        logging.info("end block() >>\n")
 
     def expression(self):
-        logging.info("> expression()")
+        logging.info("<< start expression()")
         self.assignment()
-        logging.info("< expression()")
+        logging.info("end expression() >>\n")
 
     def assignment(self):
-        logging.info("> assignment()")
+        logging.info("<< start assignment()")
 
         if self.test_class(TokenClass.DELIM_OPEN_PAREN):
             self.call()
@@ -278,79 +282,78 @@ class SyntaxAnalyzer:
 
                 if self.test_class(TokenClass.IDENTIFIER):
                     self.validate_class(TokenClass.IDENTIFIER)
-                else:
-                    logging.error("Expected identifier after '.' in assignment")
-            else:
-                logging.error("Expected '.' after call in assignment")
         else:
             self.logic_or()
 
         if self.test_class(TokenClass.OPERATOR_ASSIGN):
             self.validate_class(TokenClass.OPERATOR_ASSIGN)
             self.assignment()
-        else:
-            logging.error("Expected '=' after identifier in assignment")
 
-        logging.info("< assignment()")
+        logging.info("end assignment() >>\n")
 
     def logic_or(self):
-        logging.info("> logic_or()")
+        logging.info("<< start logic_or()")
         self.logic_and()
-        while self.test_class(TokenClass.LOGIC_OR):
+        while self.current_token.token_class == TokenClass.LOGIC_OR:
+            self.validate_class(TokenClass.LOGIC_OR)
             self.logic_and()
-        logging.info("< logic_or()")
+        logging.info("end logic_or() >>\n")
 
     def logic_and(self):
-        logging.info("> logic_and()")
+        logging.info("<< start logic_and()")
         self.equality()
-        while self.test_class(TokenClass.LOGIC_AND):
+        while self.current_token.token_class == TokenClass.LOGIC_AND:
+            self.validate_class(TokenClass.LOGIC_AND)
             self.equality()
-        logging.info("< logic_and()")
+        logging.info("end logic_and() >>\n")
 
     def equality(self):
-        logging.info("> equality()")
+        logging.info("<< start equality()")
         self.comparison()
         while self.test_class(TokenClass.OPERATOR_NOT_EQUAL, TokenClass.OPERATOR_EQUAL):
             self.comparison()
-        logging.info("< equality()")
+        logging.info("end equality() >>\n")
         
     def comparison(self):
-        logging.info("> comparison()")
+        logging.info("<< start comparison()")
         self.term()
         while self.test_class(TokenClass.OPERATOR_GT, TokenClass.OPERATOR_GTE, TokenClass.OPERATOR_LT, TokenClass.OPERATOR_LTE):
             self.validate_class(TokenClass.OPERATOR_GT, TokenClass.OPERATOR_GTE, TokenClass.OPERATOR_LT, TokenClass.OPERATOR_LTE)
             self.term()
-        logging.info("< comparison()")
+        logging.info("end comparison() >>\n")
 
     def term(self):
-        logging.info("> term()")
+        logging.info("<< start term()")
         self.factor()
         while self.test_class(TokenClass.OPERATOR_ADD, TokenClass.OPERATOR_SUB):
             self.validate_class(TokenClass.OPERATOR_ADD, TokenClass.OPERATOR_SUB)
             self.factor()
-        logging.info("< term()")
+        logging.info("end term() >>\n")
 
     def factor(self):
-        logging.info("> factor()")
+        logging.info("<< start factor()")
         self.unary()
         while self.test_class(TokenClass.OPERATOR_DIV, TokenClass.OPERATOR_MUL):
+            self.validate_class(TokenClass.OPERATOR_DIV, TokenClass.OPERATOR_MUL)
             self.unary()
-        logging.info("< factor()")
+        logging.info("end factor() >>\n")
 
     def unary(self):
-        logging.info("> unary()")
+        logging.info("<< start unary()")
         if self.test_class(TokenClass.OPERATOR_NOT, TokenClass.OPERATOR_SUB):
+            self.validate_class(TokenClass.OPERATOR_NOT, TokenClass.OPERATOR_SUB)
             self.unary()
         else:
             self.call()
-        logging.info("< unary()")
+        logging.info("end unary() >>\n")
 
     def call(self):
-        logging.info("> call()")
+        logging.info("<< start call()")
         self.primary()
 
         while True:
             if self.test_class(TokenClass.DELIM_OPEN_PAREN):
+                self.validate_class(TokenClass.DELIM_OPEN_PAREN)
                 self.arguments()
                 self.validate_class(TokenClass.DELIM_CLOSE_PAREN)
             elif self.test_class(TokenClass.DELIM_DOT):
@@ -359,12 +362,12 @@ class SyntaxAnalyzer:
             else:
                 break
 
-        logging.info("< call()")
+        logging.info("end call() >>\n")
 
 
 
     def primary(self):
-        logging.info("> primary()")
+        logging.info("<< start primary()")
         
         if self.test_class(TokenClass.CONST_TRUE):
             self.validate_class(TokenClass.CONST_TRUE)
@@ -398,21 +401,21 @@ class SyntaxAnalyzer:
         else:
             raise SyntaxError("Unexpected token. Expected primary expression.")
         
-        logging.info("< primary()")
+        logging.info("end primary() >>\n")
 
 
     def function(self):
-        logging.info("> function()")
+        logging.info("<< start function()")
         self.validate_class(TokenClass.IDENTIFIER)
         self.validate_class(TokenClass.DELIM_OPEN_PAREN)
         parameters = self.parameters() if self.test_class(TokenClass.IDENTIFIER) else []
         self.validate_class(TokenClass.DELIM_CLOSE_PAREN)
         self.block() 
-        logging.info("< function()")
+        logging.info("end function() >>\n")
 
 
     def parameters(self):
-        logging.info("> parameters()")
+        logging.info("<< start parameters()")
         parameters = []
         if self.test_class(TokenClass.IDENTIFIER):
             parameters.append(self.validate_class(TokenClass.IDENTIFIER))
@@ -422,23 +425,23 @@ class SyntaxAnalyzer:
                 parameters.append(parameter)
         else:
             logging.info("No parameters found")
-        logging.info("< parameters()")
+        logging.info("end parameters() >>\n")
         return parameters
 
 
 
 
     def arguments(self):
-        logging.info("> arguments()")
+        logging.info("<< start arguments() >>\n")
         self.expression()
         while self.test_class(TokenClass.DELIM_COMMA):
             self.validate_class(TokenClass.DELIM_COMMA)
             self.expression()
-        logging.info("< arguments()")
+        logging.info("end arguments() >>\n")
 
     def test_class(self, *classes_token):
         classes_string = ", ".join(str(cls) for cls in classes_token)
-        logging.info("? testing classes {} => {}".format(classes_string, self.current_token))
+        logging.info("Testing classes {} => {}".format(classes_string, self.current_token))
 
         if self.current_token is None:
             return False
@@ -452,18 +455,10 @@ class SyntaxAnalyzer:
                 return result
             else:
                 self.current_token = None
-            # Atualiza para o próximo token somente se houver correspondência
-
         
-
-
     def validate_class(self, *classes_token):
         classes_string = ", ".join(str(cls) for cls in classes_token)
-        print("classes", classes_string)
-        logging.info("? validating classes {} => {}".format(classes_string, self.current_token))
-        print("current: ", self.current_token)
-        print("classes: ", classes_token)
-        print("string: ", classes_string)
+        logging.info("Validating classes {} => {}".format(classes_string, self.current_token))
 
         if self.current_token is None:
             raise SyntaxError("Unexpected end of input.")
@@ -472,7 +467,7 @@ class SyntaxAnalyzer:
             current_token_index = self.lexer.index(self.current_token)
             next_token_index = current_token_index + 1
             self.current_token = self.lexer[next_token_index] if next_token_index < len(self.lexer) else None
-            print(self.current_token)
+            print("\nToken: ", self.current_token, "\n")
             token = self.current_token
             return token
         else:
@@ -485,10 +480,18 @@ def main():
     logging.basicConfig(level=logging.INFO)
 
     text =  """ 
-var a = 1;
-while (a < 10) {
-  print a;
-  a = a + 1;
+// Programa de exemplo 4
+var x = true;
+var y = 100;
+
+if(10 > y or x) {
+  print "1";
+} else {
+  if(10 < y and !x) {
+    print "2";
+  } else {
+    print "3";
+  }
 }
 """
 
