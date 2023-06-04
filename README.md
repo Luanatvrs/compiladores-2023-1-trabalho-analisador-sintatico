@@ -1,8 +1,9 @@
 # Trabalho: Analisador Sintático
 
 Nome dos alunos e números de matrícula:
-* Aluno: ___________________________
-* Aluno: ___________________________
+
+* Aluno: Luana Lorena de Matos Tavares
+* Aluno: Carlos Eduardo Viana Lima
 * Disciplina: Compiladores
 * Semestre: 2023/1
 * Data de entrega: 31/05/2023
@@ -22,13 +23,13 @@ No dia 31/05/2023 haverá uma apresentação expositiva das técnicas utilizadas
 
 O presente trabalho consiste da construção de um analisador sintático que funcione em uma sintaxe similar à linguagem C, com as seguintes diferenças:
 
-* ```print``` torna-se uma palavra reservada e vira um comando, e deixa de ser uma função
-* Esta linguagem possui tipagem dinâmica, com todas as variáveis declaradas com a palavra reservada ```var```, similar ao Javascript
-* Diferente da linguagem C padrão, há os valores booleanos ```true``` e ```false```
-* O ```null```, que representa a ausência de um valor, é representado nesta linguagem por ```nil```
-* Os operadores lógicos **e** e **ou** são expressados, respectivamente, pelas palavras reservadas ```and``` e ```or```
+* ``print`` torna-se uma palavra reservada e vira um comando, e deixa de ser uma função
+* Esta linguagem possui tipagem dinâmica, com todas as variáveis declaradas com a palavra reservada ``var``, similar ao Javascript
+* Diferente da linguagem C padrão, há os valores booleanos ``true`` e ``false``
+* O ``null``, que representa a ausência de um valor, é representado nesta linguagem por ``nil``
+* Os operadores lógicos **e** e **ou** são expressados, respectivamente, pelas palavras reservadas ``and`` e ``or``
 
-Existem alguns códigos de exemplo no arquivo ```exemplos.md```
+Existem alguns códigos de exemplo no arquivo ``exemplos.md``
 
 ## Tópicos de avaliação
 
